@@ -186,7 +186,7 @@ def clamshell_plot(
         items = map(lambda x: (x[0], x[1], x[2] * max_surface), items)
         items = map(lambda x: (x[0], x[1], radius_from_surface(x[2])), items)
         items = list(items)
-        if log: log_handle.write(f"Items: {items}\n")
+        if log: log_handle.write(f"Items ({len(items)}): {items}\n")
 
         # Draw clamshell plot section.
         if len(items) > 0:
@@ -205,7 +205,7 @@ def clamshell_plot(
             # color if fill is True.
             circle = plt.Circle(
                 (0.0, radius), 
-                radius, 
+                radius + 0.002, 
                 fill=False,
                 linewidth=0.6,
                 color="k"
@@ -214,10 +214,10 @@ def clamshell_plot(
 
             # Draw annotation.
             axs.hlines(
-                y=radius * 2, 
+                y=radius * 2 + 0.002, 
                 xmin=0, 
                 xmax=1.5, 
-                linewidth=0.4, 
+                linewidth=0.6, 
                 color="k"
             )
 
@@ -252,9 +252,9 @@ def clamshell_plot(
         )
 
     plt.axis("off")
-    plt.xlim([-1, 3])
-    plt.ylim([-0.25, 2.25])
-    plt.savefig(output, bbox_inches="tight", transparent=transparent, dpi=300)
+    plt.xlim([-1.01, 2.1])
+    plt.ylim([-0.01, 2.1])
+    plt.savefig(output, bbox_inches="tight", transparent=transparent, dpi=900)
 
     if log: log_handle.close()
 
