@@ -60,6 +60,11 @@ def cli () -> argparse.Namespace:
         default=0,
         help="Low counts threshold."
     )
+    parser.add_argument(
+        "-l", "--log",
+        default=None,
+        help="Path to log file. No log is saved if no path is supplied."
+    )
 
     return parser.parse_args()
 
@@ -119,7 +124,8 @@ def clamshell_plot(
     output: str,
     transparent: bool = False,
     color_range: ty.Tuple[Color, Color] = (GREY, BLUE),
-    counts_threshold: int = 0
+    counts_threshold: int = 0,
+    log: str = None
 ) -> None:
     """
     Draw a clamshell plot.
@@ -132,9 +138,13 @@ def clamshell_plot(
     output (str): Path to output file.
     transparent (bool): Whether to make the plot background transparent.
     color_range (ty.Tuple[Color, Color]): Color range.
+    counts_threshold (int): Low counts threshold.
+    log (str): Path to log file.
 
     Note: counts cannot be <0.
     """
+    if log: log_handle = open(log, "w")
+
     fig, axs = plt.subplots()
     axs.set_aspect(1)
     cmap = make_color_map(color_range[0], color_range[1])
@@ -154,6 +164,7 @@ def clamshell_plot(
         ((max(counts)) / nbins) * bin
         for bin in range(1, nbins + 1)
     ][::-1] + [0]
+    if log: log_handle.write(f"Thresholds: {thresholds}\n")
 
     for i in range(len(thresholds) - 1):
         max_bin = thresholds[i]
@@ -175,6 +186,7 @@ def clamshell_plot(
         items = map(lambda x: (x[0], x[1], x[2] * max_surface), items)
         items = map(lambda x: (x[0], x[1], radius_from_surface(x[2])), items)
         items = list(items)
+        if log: log_handle.write(f"Items: {items}\n")
 
         # Draw clamshell plot section.
         if len(items) > 0:
@@ -185,7 +197,7 @@ def clamshell_plot(
                 (0.0, radius), 
                 radius, 
                 color=cmap(radius),
-                fill=True
+                fill=True                
             )
             axs.add_artist(circle)
 
@@ -195,7 +207,7 @@ def clamshell_plot(
                 (0.0, radius), 
                 radius, 
                 fill=False,
-                linewidth=0.5,
+                linewidth=0.6,
                 color="k"
             )
             axs.add_artist(circle)
@@ -205,12 +217,20 @@ def clamshell_plot(
                 y=radius * 2, 
                 xmin=0, 
                 xmax=1.5, 
-                linewidth=0.5, 
+                linewidth=0.6, 
                 color="k"
             )
 
+
     # Draw low counts point at in clamshell plot for filtered out classes. 
     if len(filtered_items) > 0:
+        print(f"Filtered out {len(filtered_items)} classes.")
+        if log: 
+            log_handle.write(
+                f"Filtered out {len(filtered_items)} classes:\n"
+                f"{filtered_items}\n"
+            )
+
         radius = 0.025
 
         # Draw circle.
@@ -237,6 +257,8 @@ def clamshell_plot(
     plt.ylim([-0.25, 2.25])
     plt.savefig(output, bbox_inches="tight", transparent=transparent, dpi=300)
 
+    if log: log_handle.close()
+
 
 def main() -> None:
     """
@@ -250,7 +272,8 @@ def main() -> None:
         nbins=args.nbins,
         output=args.output,
         transparent=args.transparent,
-        counts_threshold=args.counts_threshold
+        counts_threshold=args.counts_threshold,
+        log=args.log,
     )
 
 
