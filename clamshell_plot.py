@@ -54,6 +54,12 @@ def cli () -> argparse.Namespace:
         action="store_true", 
         help="Make plot background transparent."
     )
+    parser.add_argument(
+        "-ct", "--counts_threshold",
+        type=int,
+        default=0,
+        help="Low counts threshold."
+    )
 
     return parser.parse_args()
 
@@ -112,7 +118,8 @@ def clamshell_plot(
     nbins: int,
     output: str,
     transparent: bool = False,
-    color_range: ty.Tuple[Color, Color] = (GREY, BLUE)
+    color_range: ty.Tuple[Color, Color] = (GREY, BLUE),
+    counts_threshold: int = 0
 ) -> None:
     """
     Draw a clamshell plot.
@@ -131,9 +138,16 @@ def clamshell_plot(
     fig, axs = plt.subplots()
     axs.set_aspect(1)
     cmap = make_color_map(color_range[0], color_range[1])
-    
-    # Bin counts with their labels based on max counts.
-    previous_threshold = 0
+
+    # Filter out classes with low counts and display them as smallest class 
+    # (circle with radius near-0).
+    if counts_threshold > 0:
+        all_items = list(zip(labels, counts))
+        filtered_items = filter(lambda x: x[1] < counts_threshold, all_items)
+        other_items = filter(lambda x: x[1] >= counts_threshold, all_items)
+        filtered_items, other_items = list(filtered_items), list(other_items)
+    else:
+        filtered_items, other_items = [], list(zip(labels, counts))
 
     # Calculate bin thresholds in counts.
     thresholds = [
@@ -149,7 +163,7 @@ def clamshell_plot(
         # threshold.
         items = filter(
             lambda x: (x[1] > min_bin) & (x[1] <= max_bin),
-            zip(labels, counts)
+            other_items
         )
 
         # Convert counts to surface areas with same ratio as to the max count.
@@ -180,9 +194,9 @@ def clamshell_plot(
             circle = plt.Circle(
                 (0.0, radius), 
                 radius, 
-                color="k",
                 fill=False,
-                linewidth=0.5
+                linewidth=0.5,
+                color="k"
             )
             axs.add_artist(circle)
 
@@ -194,6 +208,29 @@ def clamshell_plot(
                 linewidth=0.5, 
                 color="k"
             )
+
+    # Draw low counts point at in clamshell plot for filtered out classes. 
+    if len(filtered_items) > 0:
+        radius = 0.025
+
+        # Draw circle.
+        draw_circle = plt.Circle(
+            (0.0, radius), 
+            radius, 
+            fill=True, 
+            linewidth=0.5, 
+            color="k"
+        )
+        axs.add_artist(draw_circle)
+
+        # Draw annotation.
+        axs.hlines(
+            y=radius * 2, 
+            xmin=0, 
+            xmax=1.5, 
+            linewidth=0.5, 
+            color="k"
+        )
 
     plt.axis("off")
     plt.xlim([-1, 3])
@@ -212,7 +249,8 @@ def main() -> None:
         labels=labels, 
         nbins=args.nbins,
         output=args.output,
-        transparent=args.transparent
+        transparent=args.transparent,
+        counts_threshold=args.counts_threshold
     )
 
 
