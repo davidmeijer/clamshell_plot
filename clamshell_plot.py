@@ -217,14 +217,13 @@ def clamshell_plot(
                 y=radius * 2, 
                 xmin=0, 
                 xmax=1.5, 
-                linewidth=0.6, 
+                linewidth=0.4, 
                 color="k"
             )
 
 
     # Draw low counts point at in clamshell plot for filtered out classes. 
     if len(filtered_items) > 0:
-        print(f"Filtered out {len(filtered_items)} classes.")
         if log: 
             log_handle.write(
                 f"Filtered out {len(filtered_items)} classes:\n"
